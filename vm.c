@@ -467,3 +467,33 @@ copyout(pml4e_t *pgdir, addr_t va, void *p, uint64 len)
   }
   return 0;
 }
+
+void
+walk_pagetable(pml4e_t *pml4)
+{
+  cprintf("page table pml4 va 0x%p (pa 0x%x)\n", pml4, V2P((void*)pml4));
+  // TODO: Your solution goes here
+  cprintf("TODO: Not implemented yet.\n");
+}
+
+// print the memory for the current process
+// if mode == 0, print the first 10 virtual pages (and their PTEs)
+// if mode == 1, print the entire page table
+void
+print_mmap(pml4e_t *pml4e, int mode)
+{
+  if (mode == 0) {
+    for (uint64 va = 0; va < PGSIZE*10; va += PGSIZE) {
+      pte_t *pte = walkpgdir(pml4e, (void *)va, 0);
+      if (pte) {
+        addr_t flags = PTE_FLAGS(*pte);
+        cprintf("VA %p: PTE %p, flags %x\n", va, *pte, flags);
+      } else {
+        cprintf("VA %p: unmapped (no PTE)\n", va);
+      }
+    }
+  }
+
+  if (mode == 1)
+    walk_pagetable(pml4e);
+}

@@ -6,6 +6,8 @@
 #include "mmu.h"
 #include "proc.h"
 
+void print_mmap(pml4e_t *pml4e, int mode);
+
 int
 sys_fork(void)
 {
@@ -86,4 +88,24 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+addr_t
+sys_vmprint(void)
+{
+  int mode;
+  if (argint(0, &mode) < 0)
+    return -1;
+  if (mode != 0 && mode != 1)
+    return -1;
+
+  struct proc *curproc = current();
+
+  if (mode == 0)
+    cprintf("[k] First 10 pages of process PID %d (%s) page table:\n", curproc->pid, curproc->name);
+  else
+    cprintf("[k] Full page table of process PID %d (%s):\n", curproc->pid, curproc->name);
+
+  print_mmap(curproc->pgdir, mode);
+  return 0;
 }

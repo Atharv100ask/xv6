@@ -63,6 +63,10 @@ struct proc {
   char name[16];               // Process name (debugging)
 };
 
+static inline struct proc* current(void) {
+  return proc;
+}
+
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
