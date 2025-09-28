@@ -169,9 +169,12 @@ struct segdesc {
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((addr_t)(pte) & ~0xFFF)
+#define PTE2PA(pte) PTE_ADDR(pte)
 #define PTE_FLAGS(pte)  ((addr_t)(pte) &  0xFFF)
 #ifndef __ASSEMBLER__
 typedef addr_t pte_t;
+typedef pte_t* pagetable_t;   // hw3
 #endif
 
 #define TRAP_GATE 0x100 // trap gate if one, interrupt gate if zero
+

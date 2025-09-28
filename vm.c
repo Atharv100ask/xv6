@@ -14,7 +14,49 @@ __thread struct proc *proc;       // %fs:(-8)
 
 static pml4e_t *kpml4;
 static pdpe_t *kpdpt;
+//new bit for hw3
+// Recursive page table printer for x86-64
+typedef uint64* pagetable_t;  // x86-64
 
+static void
+vmprint_walk(pagetable_t pagetable, int level, uint64 va_base)
+{
+  if(level < 0) return;
+
+  if(level == 3){
+    // top level: PML4
+    cprintf("page table pml4 va %p (pa 0x%p)\n",
+            pagetable, PTE2PA((uint64)pagetable));
+  }
+
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    if(pte & PTE_P){   // present
+      uint64 pa = PTE2PA(pte);
+      uint64 va = va_base + ((uint64)i << (level*9 + 12));
+
+      // indentation
+      for(int d = 3; d > level; d--)
+        cprintf(" ..");
+
+      cprintf("0x%p: pte 0x%p pa 0x%p\n", va, pte, pa);
+
+      // recurse if not leaf (skip huge pages)
+      if(level > 0 && (pte & PTE_PS) == 0){  
+        pagetable_t child = (pagetable_t)pa;
+        vmprint_walk(child, level-1, va);
+      }
+    }
+  }
+}
+
+void
+vmprint_full(pagetable_t pagetable)
+{
+  vmprint_walk(pagetable, 3, 0);
+}
+
+//new bit for hw3 end
 void
 syscallinit(void)
 {
@@ -467,14 +509,41 @@ copyout(pml4e_t *pgdir, addr_t va, void *p, uint64 len)
   }
   return 0;
 }
+//hw3
+static void
+walk_recursive(pml4e_t *pagetable, int level, uint64 va_base)
+{
+  for (int i = 0; i < 512; i++) {
+    pte_t pte = pagetable[i];
+    if (pte & PTE_P) {   // valid entry
+      uint64 pa = PTE_ADDR(pte);
+      uint64 va = va_base + ((uint64)i << (level*9 + 12));
 
+      // indent according to depth
+      for (int d = 3; d > level; d--)
+        cprintf(" ..");
+
+      cprintf("0x%p: pte 0x%p pa 0x%p\n", va, pte, pa);
+
+      // If not a leaf and not a large page, recurse
+      if (level > 0 && (pte & PTE_PS) == 0) {
+        pml4e_t *child = (pml4e_t*)P2V(pa);
+        walk_recursive(child, level-1, va);
+      }
+    }
+  }
+}
+
+//hw3
 void
 walk_pagetable(pml4e_t *pml4)
 {
-  cprintf("page table pml4 va 0x%p (pa 0x%x)\n", pml4, V2P((void*)pml4));
-  // TODO: Your solution goes here
-  cprintf("TODO: Not implemented yet.\n");
+  cprintf("page table pml4 va 0x%p (pa 0x%x)\n",
+          pml4, V2P((void*)pml4));
+
+  walk_recursive(pml4, 3, 0);
 }
+
 
 // print the memory for the current process
 // if mode == 0, print the first 10 virtual pages (and their PTEs)
