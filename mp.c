@@ -1,6 +1,13 @@
 // Multiprocessor support
 // Search memory for MP description structures.
 // http://developer.intel.com/design/pentium/datashts/24201606.pdf
+//
+// This file handles multi-core boot: mpinit() parses ACPI/MP tables to learn
+// about APIC IDs, then main.c/startothers() launches secondary CPUs with a
+// trampoline stack and shared entry code. Synchronization primitives (spinlock
+// /sleeplock) rely on each CPU's bookkeeping here (cpu structs) to disable
+// interrupts and avoid deadlock. The design mirrors how real kernels stage
+// per-core data before enabling interrupts and scheduler.
 
 #include "types.h"
 #include "defs.h"

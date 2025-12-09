@@ -5,6 +5,14 @@
 //   + Directories: inode with special contents (list of other inodes!)
 //   + Names: paths like /usr/rtm/xv6/fs.c for convenient naming.
 //
+// Reliability & mapping notes:
+// - Crash tolerance comes from the write-ahead log in log.c; begin_op()/end_op
+//   bracket syscalls so metadata updates are replayed after a reboot rather
+//   than leaving the on-disk state half-written.
+// - mmap-style file<->memory mapping is not implemented in xv6. A natural
+//   integration point would mirror Linux's do_mmap by teaching the VM layer to
+//   lazily fault in file-backed pages using an inode's bmap() results.
+//
 // This file contains the low-level file system manipulation
 // routines.  The (higher-level) system call implementations
 // are in sysfile.c.

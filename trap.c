@@ -8,6 +8,19 @@
 #include "traps.h"
 #include "spinlock.h"
 
+// Interrupts & device drivers overview:
+// - trap() is the central dispatcher for both hardware IRQs and CPU faults.
+//   vectors.S builds stubs that land here with a trapframe; tvinit() wires the
+//   IDT entries to those stubs. Device-specific handlers (uartintr(), ideintr(),
+//   kbdintr()) live in their driver files and acknowledge the hardware before
+//   returning.
+// - The timer interrupt drives preemption: every tick bumps the global ticks
+//   counter and wakeup()s sleepers, then RUNNING procs yield() so the scheduler
+//   can rotate. This provides basic fairness without priorities.
+// - Fault handling: unexpected traps in kernel mode panic so developers can
+//   debug with gdb; faults in user mode mark the process killed and let
+//   scheduler() reap it on return to userspace.
+
 // Interrupt descriptor table (shared by all CPUs).
 uint *idt;
 extern addr_t vectors[];  // in vectors.S: array of 256 entry pointers

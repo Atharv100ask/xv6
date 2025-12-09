@@ -15,6 +15,22 @@ __thread struct proc *proc;       // %fs:(-8)
 static pml4e_t *kpml4;
 static pdpe_t *kpdpt;
 
+// Virtual memory roadmap:
+// - x86-64 paging: each address walks four levels (PML4 -> PDPT -> PD -> PT).
+//   walkpgdir() allocates intermediate tables on demand, and the PTE flags in
+//   mmu.h document permissions (PTE_U, PTE_W, etc.).
+// - Kernel vs. user view: kvmalloc() builds a direct map of physical memory so
+//   the kernel can access every page while running with either the scheduler
+//   page table (kpml4) or a process table. switchuvm() swaps the CR3 register
+//   during a context switch so CPU cores execute with the current proc's
+//   mappings.
+// - Paging lifecycle: setupkvm()/allocuvm()/deallocuvm() grow or shrink user
+//   spaces; copyuvm() clones a parent's page tables for fork(); lcr3() in
+//   switchuvm() ensures TLBs point at the right tree after a context switch.
+// - Page replacement: xv6 does not implement eviction—allocation fails once
+//   kalloc() runs out. This keeps the design small for teaching, but the
+//   mapping helpers are the place to insert an LRU/clock policy.
+
 void
 syscallinit(void)
 {

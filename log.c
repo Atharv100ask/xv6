@@ -28,6 +28,11 @@
 //   block C
 //   ...
 // Log appends are synchronous.
+//
+// Failure recovery: recover_from_log() replays committed transactions during
+// boot so metadata writes survive power loss. The log is intentionally simple
+// (no checksums or batching heuristics) to keep the teaching focus clear; more
+// advanced systems would add journaling barriers, checksums, or copy-on-write.
 
 // Contents of the header block, used for both the on-disk header block
 // and to keep track in memory of logged block# before commit.
