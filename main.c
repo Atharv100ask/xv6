@@ -6,6 +6,23 @@
 #include "proc.h"
 #include "x86.h"
 
+// High-level tour for newcomers:
+// - Build/toolchain: the Makefile drives a tiny LLVM/binutils toolchain to
+//   compile the kernel into an ELF image that bootasm.S loads with QEMU/Bochs.
+//   The ELF layout is documented in kernel.ld and visible with objdump -h.
+// - OS structure: main() is the C entry point on the bootstrap processor and
+//   wires up early allocators (kinit1/kinit2), the kernel page table
+//   (kvmalloc), device controllers, and finally enters the scheduler. Other
+//   CPUs start in entryother.S and rendezvous in mpmain() before scheduling.
+// - Debugging/exploration: run "make qemu-nox-gdb" and connect gdb to the
+//   QEMU GDB stub; cprintf() is the printf-style kernel logger; panic() drops
+//   into an infinite loop so gdb can inspect memory; symbols match vmlinux.
+// - Kernel browsing: defs.h provides prototypes; the proc/ files define the
+//   process lifecycle; vm.c explains the 4-level x86-64 page tables; trap.c
+//   describes interrupts; fs.c/log.c cover the file system stack.
+// - Security/virtualization: xv6 assumes a cooperative lab VM; it relies on
+//   hardware privilege levels and paging but omits production hardening.
+
 static void startothers(void);
 static void mpmain(void)  __attribute__((noreturn));
 extern pde_t *kpgdir;

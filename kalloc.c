@@ -1,6 +1,13 @@
 // Physical memory allocator, intended to allocate
 // memory for user processes, kernel stacks, page table pages,
 // and pipe buffers. Allocates 4096-byte pages.
+//
+// kalloc()/kfree() form the core of xv6's physical-page pool. There is no
+// page replacement layer: once the freelist is empty we panic rather than
+// evicting. The allocator is intentionally tiny so students can experiment
+// with clock/LRU policies or debugging helpers (e.g., red zones) on top.
+// The two-phase init (kinit1/kinit2) lets the boot CPU run without locks
+// until other cores and interrupts are ready.
 
 #include "types.h"
 #include "defs.h"

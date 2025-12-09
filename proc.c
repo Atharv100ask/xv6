@@ -7,6 +7,23 @@
 #include "proc.h"
 #include "spinlock.h"
 
+// Process lifecycle quick tour:
+// - Creation: allocproc() carves a struct proc from ptable, installs a kernel
+//   stack/trapframe, and fork()/userinit() clone or build a user page table.
+// - Scheduling & fairness: scheduler() in this file runs a simple round-robin
+//   loop over RUNNABLE procs under ptable.lock. yield() lets timer interrupts
+//   hand off the CPU; there is no priority or CFS logic, keeping the policy
+//   intentionally transparent for study.
+// - Context switching: swtch() saves/restores CPU registers and switchuvm()
+//   swaps CR3 to the process page table so address spaces follow the thread.
+// - Sleep/wakeup: sleep(chan, lock) parks a process while releasing a chosen
+//   lock; wakeup(chan) scans the table and moves sleepers back to RUNNABLE.
+// - Exit/reaping: exit() marks a process ZOMBIE, hands children to init, and
+//   wait() cleans up resources. Debugging zombie leaks often means checking
+//   that wakeup() reaches a waiting parent.
+// - Kernel threads: xv6 uses one kernel thread per struct proc; there is no
+//   user-level threading library, but the same primitives can be reused.
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];

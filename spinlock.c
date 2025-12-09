@@ -1,4 +1,13 @@
 // Mutual exclusion spin locks.
+// - acquire()/release() wrap simple TAS (xchg) with interrupt masking to avoid
+//   deadlock with interrupt handlers. The memory barriers (__sync_synchronize)
+//   keep critical-section writes ordered across cores.
+// - Locks here are unfair (first-come not guaranteed); sleepable locks are
+//   implemented separately in sleeplock.c. Deadlock debugging often starts by
+//   checking holding() and the saved pcs[] trace.
+// - Higher-level primitives (rwlock/seqlock) can reuse these spinlocks; the
+//   SMP boot code in mp.c ensures each CPU has cpu->ncli bookkeeping for nest
+//   counting while interrupts are disabled.
 
 #include "types.h"
 #include "defs.h"
