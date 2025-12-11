@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "vdso.h"
 
 struct {
   struct spinlock lock;
@@ -91,6 +92,8 @@ userinit(void)
 
   inituvm(p->pgdir, _binary_initcode_start,
           (addr_t)_binary_initcode_size);
+  if(setupvdso(p->pgdir, p) < 0)
+    panic("userinit: vdso");
   p->sz = PGSIZE * 2;
   memset(p->tf, 0, sizeof(*p->tf));
 
@@ -113,6 +116,8 @@ growproc(int64 n)
   addr_t sz;
 
   sz = proc->sz;
+  if(n > 0 && sz + n >= VDSO_ADDR)
+    return -1;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
       return -1;
@@ -140,7 +145,7 @@ fork(void)
     return -1;
 
   // Copy process state from p.
-  if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
+  if((np->pgdir = copyuvm(proc->pgdir, proc->sz, np)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;

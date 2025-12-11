@@ -11,6 +11,7 @@
 char buf[8192];
 char name[3];
 char *echoargv[] = { "echo", "ALL", "TESTS", "PASSED", 0 };
+extern int __getpid_syscall(void);
 
 void
 failexit(const char * const msg)
@@ -1591,6 +1592,27 @@ uio()
   printf(1, "uio test done\n");
 }
 
+void
+vdsotest(void)
+{
+  int via_syscall = __getpid_syscall();
+  int via_vdso = getpid();
+  struct vdso_data *data = (struct vdso_data *)VDSO_ADDR;
+
+  if(via_syscall != via_vdso){
+    printf(1, "vdso getpid mismatch %d vs %d\n", via_syscall, via_vdso);
+    exit();
+  }
+
+  if(data->magic != VDSO_MAGIC || data->pid != via_vdso){
+    printf(1, "vdso metadata invalid magic %x pid %d expected %d\n",
+           data->magic, data->pid, via_vdso);
+    exit();
+  }
+
+  printf(1, "vdso test ok\n");
+}
+
 void argptest()
 {
   int fd;
@@ -1622,6 +1644,7 @@ main(int argc, char *argv[])
   close(open("usertests.ran", O_CREATE));
 
   argptest();
+  vdsotest();
   createdelete();
   linkunlink();
   concreate();

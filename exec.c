@@ -6,6 +6,7 @@
 #include "defs.h"
 #include "x86.h"
 #include "elf.h"
+#include "vdso.h"
 
 int
 exec(char *path, char **argv)
@@ -86,6 +87,9 @@ exec(char *path, char **argv)
 
   sp -= (1+argc+1) * sizeof(addr_t);
   if(copyout(pgdir, sp, ustack, (1+argc+1)*sizeof(addr_t)) < 0)
+    goto bad;
+
+  if(setupvdso(pgdir, proc) < 0)
     goto bad;
 
   // Save program name for debugging.

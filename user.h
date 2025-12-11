@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "vdso.h"
 struct stat;
 struct rtcdate;
 
@@ -21,6 +22,7 @@ int link(char*, char*);
 int mkdir(char*);
 int chdir(char*);
 int dup(int);
+int __getpid_syscall(void);
 int getpid(void);
 char* sbrk(uint64);
 int sleep(int);
