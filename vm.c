@@ -199,7 +199,7 @@ switchuvm(struct proc *p)
 // In 64-bit mode, the page table has four levels: PML4, PDPT, PD and PT
 // For each level, we dereference the correct entry, or allocate and
 // initialize entry if the PTE_P bit is not set
-static pte_t *
+pte_t *
 walkpgdir(pde_t *pml4, const void *va, int alloc)
 {
   pml4e_t *pml4e;
@@ -441,7 +441,7 @@ clearpteu(pml4e_t *pgdir, char *uva)
 // Given a parent process's page table, create a copy
 // of it for a child.
 pde_t*
-copyuvm(pml4e_t *pgdir, uint sz)
+copyuvm(pml4e_t *pgdir, uint sz, struct proc *child)
 {
   pde_t *d;
   pte_t *pte;
@@ -463,6 +463,8 @@ copyuvm(pml4e_t *pgdir, uint sz)
     if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0)
       goto bad;
   }
+  if(copyvdso(d, pgdir, child) < 0)
+    goto bad;
   return d;
 
 bad:

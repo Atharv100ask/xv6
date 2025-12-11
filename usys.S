@@ -6,7 +6,15 @@
   name: \
     mov $SYS_ ## name, %rax; \
     mov %rcx, %r10 ;\
-    syscall		  ;\
+    syscall               ;\
+    ret
+
+#define SYSCALL_NUM(name, num) \
+  .global name; \
+  name: \
+    mov $num, %rax; \
+    mov %rcx, %r10 ;\
+    syscall               ;\
     ret
 
 SYSCALL(fork)
@@ -26,7 +34,7 @@ SYSCALL(link)
 SYSCALL(mkdir)
 SYSCALL(chdir)
 SYSCALL(dup)
-SYSCALL(getpid)
+SYSCALL_NUM(__getpid_syscall, SYS_getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)

@@ -4,6 +4,8 @@
 #include "user.h"
 #include "x86.h"
 
+int __getpid_syscall(void);
+
 char*
 strcpy(char *s, char *t)
 {
@@ -102,4 +104,14 @@ memmove(void *vdst, void *vsrc, int n)
   while(n-- > 0)
     *dst++ = *src++;
   return vdst;
+}
+
+int
+getpid(void)
+{
+  struct vdso_data *data = (struct vdso_data *)VDSO_ADDR;
+
+  if(data->magic == VDSO_MAGIC)
+    return data->pid;
+  return __getpid_syscall();
 }

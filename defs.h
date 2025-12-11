@@ -1,3 +1,5 @@
+#include "mmu.h"
+
 struct buf;
 struct context;
 struct file;
@@ -180,11 +182,18 @@ addr_t          deallocuvm(pml4e_t*, uint64, uint64);
 void            freevm(pml4e_t*);
 void            inituvm(pml4e_t*, char*, uint);
 int             loaduvm(pml4e_t*, char*, struct inode*, uint, uint);
-pde_t*          copyuvm(pml4e_t*, uint);
+pde_t*          copyuvm(pml4e_t*, uint, struct proc *);
+pte_t*          walkpgdir(pml4e_t *, const void *, int);
+int             mappages(pde_t *, void *, addr_t, addr_t, int);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pml4e_t*, addr_t, void*, uint64);
 void            clearpteu(pml4e_t *pgdir, char *uva);
+
+// vdso.c
+int             setupvdso(pml4e_t *, struct proc *);
+int             copyvdso(pml4e_t *, pml4e_t *, struct proc *);
+void            updatevdso(struct proc *);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
